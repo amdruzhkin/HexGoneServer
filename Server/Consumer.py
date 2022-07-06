@@ -43,5 +43,5 @@ class Consumer:
 
     def _init_services(self):
         return {
-            "MatchMaking": RabbitMQ("MatchMaking"),
+            "GameManager": RabbitMQ("GameManager"),
         }
