@@ -128,16 +128,16 @@ class Table:
                 neighbor: Cell = self.get_cell(n[0], n[1])
                 self.check_neighbors(neighbor)
 
-table = Table()
-table.create_table()
-
-table.delete_cell(1, 0)
-table.delete_cell(0, -1)
-table.delete_cell(-1, -1)
+# table = Table()
+# table.create_table()
+#
+# table.delete_cell(1, 0)
+# table.delete_cell(0, -1)
 # table.delete_cell(-1, -1)
-
-table.delete_cell(2, -2)
-table.delete_cell(1, -3)
-table.delete_cell(0, -3)
-table.delete_cell(0, -2)
-table.get_statement()
+# # table.delete_cell(-1, -1)
+#
+# table.delete_cell(2, -2)
+# table.delete_cell(1, -3)
+# table.delete_cell(0, -3)
+# table.delete_cell(0, -2)
+# table.get_statement()

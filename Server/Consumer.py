@@ -5,19 +5,18 @@ from Utils.RabbitMQ import RabbitMQ
 
 
 class Consumer:
-    def __init__(self, connections):
-        self.connections = connections
-        self.services = self._init_services()
-
+    def __init__(self, core):
+        self.Core = core
 
     async def handler(self, ws):
         await self.register(ws)
 
         try:
             async for message in ws:
-                data = json.loads(message)
-                data["sender"] = hex(id(ws))
-                self.services[data["service"]].send(json.dumps(data))
+                message = json.loads(message)
+                message["sender"] = hex(id(ws))
+                self.Core.i_stream.append(json.dumps(message))
+
 
         except Exception as e:
             await self.unregister(ws)
@@ -29,19 +28,14 @@ class Consumer:
 
     async def register(self, ws):
         try:
-            self.connections[hex(id(ws))] = ws
+            self.Core.connections[hex(id(ws))] = ws
             print(f"New connection: { ws.remote_address[0] }:{ ws.remote_address[1] }")
         except Exception as e:
             print(e)
 
     async def unregister(self, ws):
         try:
-            del self.connections[hex(id(ws))]
+            del self.Core.connections[hex(id(ws))]
             print(f"Connection closed: {ws.remote_address[0]}:{ws.remote_address[1]}")
         except Exception as e:
             print(e)
-
-    def _init_services(self):
-        return {
-            "GameManager": RabbitMQ("GameManager"),
-        }

@@ -1,26 +1,24 @@
-import asyncio
-import json
 import threading
-
-from Match import Match
-from Utils.RabbitMQ import RabbitMQ
+import time
 
 
 class GameManager:
     def __init__(self):
-        self.consumer = RabbitMQ("GameManager")
-        self.producer = RabbitMQ("Producer")
         self.actions = self._init_actions()
-        self.queue = []
-        self.matches = {}
+        self.queue = set()
 
-    def callback(self, ch, method, properties, body):
-        i_body = json.loads(body)
-        self.actions[i_body["action"]](i_body["sender"])
-
-    def run(self):
         threading.Thread(target=self.processor).start()
-        self.consumer.consuming(self.callback)
+
+    def processor(self):
+        while True:
+            print("Processor")
+            time.sleep(5)
+
+    async def handle(self, message):
+        action = message["action"]
+        sender = message["sender"]
+        del message["action"]
+        return await self.actions[action](sender)
 
     def _init_actions(self):
         return {
@@ -28,39 +26,27 @@ class GameManager:
             "quit_queue": self.quit_queue,
         }
 
-    def join_queue(self, conn):
-        self.queue.append(conn)
-        o_data = {
+    async def join_queue(self, sender):
+        self.queue.add(sender)
+        return {
             "action": "join_queue",
-            "recipients": [conn],
+            "recipients": [sender],
             "status": "accept",
         }
-        self.producer.send(json.dumps(o_data))
 
-    def quit_queue(self, conn):
-        self.queue.remove(conn)
-        o_data = {
-            "action": "quit_queue",
-            "recipients": [conn],
-            "status": "accept",
-        }
-        self.producer.send(json.dumps(o_data))
-
-    def processor(self):
-        while True:
-            if len(self.queue) > 0 and len(self.queue) % 2 == 0:
-                p1 = self.queue.pop()
-                p2 = self.queue.pop()
-                print(type(p1), type(p2))
-                match = Match(p1, p2)
-                self.matches[match.id] = match
-                o_data = {
-                    "action": "match_created",
-                    "recipients": [p1, p2],
-                    "attrs": {
-                        "id": match.id
-                    }
-                }
-                self.producer.send(json.dumps(o_data))
+    async def quit_queue(self, sender):
+        try:
+            self.queue.remove(sender)
+            return {
+                "action": "quit_queue",
+                "recipients": [sender],
+                "status": "success",
+            }
+        except Exception as e:
+            return {
+                "action": "quit_queue",
+                "recipients": [sender],
+                "status": "failed",
+            }
 
 

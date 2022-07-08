@@ -1,28 +1,22 @@
 import asyncio
 import json
+import threading
+
 import pika
 
 
 class Producer():
-    def __init__(self, connections):
-        self.connections = connections
+    def __init__(self, core):
+        self.Core = core
 
-        self.rmq_connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-        self.channel = self.rmq_connection.channel()
-        self.queue = "Producer"
-
-
-    def handler(self):
-        self.channel.basic_consume(queue=self.queue,
-                                   auto_ack=True,
-                                   on_message_callback=self.callback)
-        self.channel.start_consuming()
-
-    def callback(self, ch, method, properties, body):
-        i_data = json.loads(body)
-        recipients = i_data["recipients"]
-        del i_data["recipients"]
-        for r in recipients:
-            asyncio.run(self.connections[r].send(json.dumps(i_data)))
+    async def handler(self):
+        while True:
+            if len(self.Core.o_stream) > 0:
+                message = json.loads(self.Core.o_stream.pop())
+                recipients = message["recipients"]
+                del message["recipients"]
+                for r in recipients:
+                    await self.Core.connections[r].send(json.dumps(message))
+            await asyncio.sleep(0)
 
 
