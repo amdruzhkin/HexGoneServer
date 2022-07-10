@@ -11,8 +11,9 @@ class GameManager:
 
     def processor(self):
         while True:
-            print("Processor")
-            time.sleep(5)
+            # print("Processor")
+            # time.sleep(5)
+            pass
 
     async def handle(self, message):
         action = message["action"]

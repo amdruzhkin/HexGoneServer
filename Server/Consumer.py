@@ -1,8 +1,6 @@
 import asyncio
 import json
 
-from Utils.RabbitMQ import RabbitMQ
-
 
 class Consumer:
     def __init__(self, core):
